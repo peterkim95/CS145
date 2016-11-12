@@ -17,10 +17,7 @@
  */
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.*;
 
 
 public class FPTree {
@@ -74,6 +71,17 @@ public class FPTree {
 		
 		constructFPTree(cond_pattern_base);
 	}
+
+	// Use Pairwise Item Lift (pil)
+	public FPTree(File inputfile, int support, boolean usePil) {
+
+		//initializations
+		this.header_table = new ArrayList<FPTreeHeaderElement>();
+		this.fptree_root = new FPTreeNode();
+		this.support_threshold = support;
+		
+		constructFPTreeUsingPil(inputfile);
+	}
 	
 	public FPTreeHeaderElement getHeaderElement(String item) 
 	{
@@ -124,6 +132,29 @@ public class FPTree {
 		return fptn;
 	}
 	
+	public void constructFPTreeUsingPil(File inputfile) {
+		Hashtable<String,Integer> itemsFrequencyTable = new Hashtable<String, Integer>();
+
+		try {
+			populateFreqTable(inputfile, itemsFrequencyTable); //populate freq hash table
+		} catch(IOException ioe) {
+			System.out.println("Error! Populating freq hash failed!");
+			System.out.println(ioe.toString());
+		}
+
+		Set<String> keys = itemsFrequencyTable.keySet();	// get all items in the transaction database
+
+        List<Set<String>> pairs = generateAllPairs(keys);	// generate all items of length 2
+        pairs.forEach((pair) -> {
+        	// Get i and j
+			List<String> list = new ArrayList<String>(pair);
+			String i = list.get(0);
+			String j = list.get(1);
+			
+		});
+
+	}
+
 	/*
 	 * Construct FP-Tree from all transactions in the file.
 	 */
@@ -720,7 +751,45 @@ public class FPTree {
 		System.out.print(ret);		
 		return ret;
 	}
-	
+
+	/*
+		Pairwise Item Lift Implementation
+	*/
+	public void populateFreqTable (File inputfile, Hashtable<String,Integer> items_frequency) throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
+        String transaction = null;
+                
+        while((transaction = br.readLine()) != null) //read input file (transaction database)
+        	extractItems(transaction, 1, items_frequency);
+        
+        br.close(); //file reading complete
+	}
+
+	private static void getSubsets(List<String> superSet, int k, int idx, Set<String> current, List<Set<String>> solution) {
+	    //successful stop clause
+	    if (current.size() == k) {
+	        solution.add(new HashSet<>(current));
+	        return;
+	    }
+	    //unseccessful stop clause
+	    if (idx == superSet.size()) return;
+	    String x = superSet.get(idx);
+	    current.add(x);
+	    //"guess" x is in the subset
+	    getSubsets(superSet, k, idx+1, current, solution);
+	    current.remove(x);
+	    //"guess" x is not in the subset
+	    getSubsets(superSet, k, idx+1, current, solution);
+	}
+
+	public List<Set<String>> generateAllPairs(Set<String> keyset) {
+		List<String> superSet = new ArrayList<>();
+		List<Set<String>> res = new ArrayList<>();
+		superSet.addAll(keyset);
+		getSubsets(superSet, 2, 0, new HashSet<String>(), res);	// look for all subsets of length k = 2
+		return res;
+	}
+
 	public static void main(String args[]) 
 	{
 		String input_data_filename;
@@ -746,7 +815,7 @@ public class FPTree {
 		totalTime = endTime - startTime;
 		tcTime += totalTime;
 		System.out.println("\n");
-		System.out.println("TreeSize: " + fpt.computeTreeSize() + "\t " + "Construction Time: " + totalTime + "ms");
+		System.out.println("TreeSize: " + fpt.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
 		System.out.println("\n");
 		System.out.println("------------");
 		System.out.println("Tree Details:");
@@ -774,7 +843,7 @@ public class FPTree {
 		totalTime = endTime - startTime;
 		tcTime += totalTime;
 		System.out.println("\n");
-		System.out.println("Mining Time: " + totalTime + "ms");
+		System.out.println("Mining Time: " + totalTime + " ms");
 		System.out.println("\n");
 
 		System.out.println("------------");
@@ -782,9 +851,11 @@ public class FPTree {
 		fpt.printFunctionCallStats();
 		System.out.println("\n");
 		System.out.println("------------");
-		System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + "ms");
+		System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
 		System.out.println("\n");
 		System.out.println("------------");
-		
+
+		FPTree fptPil = new FPTree(file, min_supp, true);
+
 	}	
 }
