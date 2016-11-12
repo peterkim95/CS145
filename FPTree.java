@@ -738,30 +738,53 @@ public class FPTree {
 		input_data_filename = "" + args[0];
 		File file = new File(input_data_filename);
 		
-		long startTime, endTime, totalTime;  
+		long startTime, endTime, totalTime, tcTime = 0;  
 
 		startTime = System.currentTimeMillis();
 		FPTree fpt = new FPTree(file, min_supp);
 		endTime   = System.currentTimeMillis();
 		totalTime = endTime - startTime;
-
+		tcTime += totalTime;
 		System.out.println("\n");
-		System.out.println("TreeSize: " + fpt.computeTreeSize() + "\t " + "BuildingTime: " + totalTime);
+		System.out.println("TreeSize: " + fpt.computeTreeSize() + "\t " + "Construction Time: " + totalTime + "ms");
 		System.out.println("\n");
+		System.out.println("------------");
+		System.out.println("Tree Details:");
 		fpt.printTreeDetails();
 		System.out.println("\n");
 		
 		/* 1. Will print the header table. */
-		//fpt.traverseFPTreeHeaderTable();
+		System.out.println("------------");
+		System.out.println("Header Table Information:");
+		fpt.traverseFPTreeHeaderTable();
+		System.out.println("\n");
 
 		/* 2. Will print the prefix tree. */
-		//fpt.traverseFPTree();
-		
-		/* 3. Will mine all the frequent patterns. */
-		fpt.minePatternsByFPGrowth("");
+		System.out.println("------------");
+		System.out.println("Prefix Tree Information:");
+		fpt.traverseFPTree();
 		System.out.println("\n");
+		
+		System.out.println("------------");
+		System.out.println("Tree Mining Result:");
+		/* 3. Will mine all the frequent patterns. */
+		startTime = System.currentTimeMillis();
+		fpt.minePatternsByFPGrowth("");
+		endTime = System.currentTimeMillis();
+		totalTime = endTime - startTime;
+		tcTime += totalTime;
+		System.out.println("\n");
+		System.out.println("Mining Time: " + totalTime + "ms");
+		System.out.println("\n");
+
+		System.out.println("------------");
+		System.out.println("Function Call Statistics:");
 		fpt.printFunctionCallStats();
 		System.out.println("\n");
+		System.out.println("------------");
+		System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + "ms");
+		System.out.println("\n");
+		System.out.println("------------");
 		
 	}	
 }
