@@ -155,7 +155,7 @@ public class FPTree {
 			System.out.println("Error! Populating freq hash failed!");
 			System.out.println(ioe.toString());
 		}
-		System.out.println(itemsFrequencyTable);
+		// System.out.println(itemsFrequencyTable);
 		final int nValue = n;
 
 		Set<String> keys = itemsFrequencyTable.keySet();	// get all items in the transaction database
@@ -187,16 +187,98 @@ public class FPTree {
 			if (!itemsTwoFreqTable.containsKey(pair)) {	// if sup(ij) == 0;
 				pilTable.put(pair, (double)0);
 			} else {	// use traditional formula pil(i,j) = (sup(ij) / (sup(i) * sup(j))) * N where N is the total number of transactions in db
-				System.out.println(itemsTwoFreqTable.get(pair));
+				// System.out.println(itemsTwoFreqTable.get(pair));
 				double pilValue = ((double)itemsTwoFreqTable.get(pair) / ((double)itemsFrequencyTable.get(i) * (double)itemsFrequencyTable.get(j))) * (double)nValue;
 				pilTable.put(pair, pilValue);
 			}
-
-			
-
 		});
-        System.out.println(itemsTwoFreqTable);
-        System.out.println(pilTable);
+
+        // System.out.println(itemsTwoFreqTable);
+        // System.out.println(pilTable);
+
+        // TODO: more efficient way to this?
+        // Find highest PIL item - breaking ties with sup if necessary
+		// int totsup = -1;
+		double maxpil = -1;
+		Set<String> highestPilPair = null;
+		for (Set<String> pair : pilTable.keySet()) {
+			double pil = pilTable.get(pair);
+			if (pil > maxpil) {	// found new higest pil value
+				maxpil = pil;
+				highestPilPair = pair;
+			} else if (pil == maxpil) {	// tied; break with sup(ij)
+				if (itemsTwoFreqTable.get(highestPilPair) < itemsTwoFreqTable.get(pair)) {	// if current sup(ij) > tied sup(ij)
+					maxpil = pil;
+					highestPilPair = pair;
+				}
+			}
+		}
+
+		// System.out.println(highestPilPair);
+		// System.out.println(maxpil);
+		// System.out.println(itemsTwoFreqTable.get(highestPilPair));
+
+		List<String> tmpList = new ArrayList<String>(highestPilPair);
+		String a = tmpList.get(0);
+		String b = tmpList.get(1);
+
+		Hashtable<String,Integer> fTable = new Hashtable<String, Integer>();
+		fTable.put(a,itemsFrequencyTable.get(a));
+		fTable.put(b,itemsFrequencyTable.get(b));
+
+		// keys.remove(a)
+		List<String> keyList = new ArrayList<>();
+		keyList.addAll(keys);
+		keyList.remove(a);
+		keyList.remove(b);	// remove i,j as they've both been already added to the freq list
+
+		System.out.println(keyList);
+		System.out.println(fTable);
+
+		List<String> pilBasedFList = new ArrayList<>();
+		pilBasedFList.add(a);	// TODO: must order a and b based on their respective supports? or doesnt matter?
+		pilBasedFList.add(b);
+
+		while (!keyList.isEmpty()) {	// add all keys to the fList
+			double maxPilSum = -1;
+			String candidate = null;
+			for (String i : keyList) {
+				double pilSum = 0;
+				Set<String> tmpSet = fTable.keySet();
+				List<String> fList = new ArrayList<>();
+				fList.addAll(tmpSet);
+				for (String key : fList) {
+					Set<String> s = new HashSet<String>();
+					s.add(i);
+					s.add(key);
+					pilSum += pilTable.get(s);
+				}
+
+				if (pilSum > maxPilSum) {
+					maxPilSum = pilSum;
+					candidate = i;
+				}
+			}
+			// System.out.println("Candidate: " + candidate);
+			// at this point, we have our candidate to add on to fTable
+			if (candidate != null) {
+				keyList.remove(candidate);
+				fTable.put(candidate, itemsFrequencyTable.get(candidate));
+				pilBasedFList.add(candidate);
+			}
+		}
+		System.out.println("The ascending fList using PIL metric: " + pilBasedFList);
+			
+		// createFPTreeHeaderTable(fTable);
+		
+		// try {
+		// 	secondScan(inputfile, fTable); //fp-tree will be created in the second scan
+		// } catch(IOException ioe) {
+		// 	System.out.println("Error! Second scan for FPTree construction failed !");
+		// 	System.out.println(ioe.toString());
+		// }
+
+		// fptree_construction_calls++;
 	}
 
 	/*
