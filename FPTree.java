@@ -80,7 +80,12 @@ public class FPTree {
 		this.fptree_root = new FPTreeNode();
 		this.support_threshold = support;
 		
+		// try {
 		constructFPTreeUsingPil(inputfile);
+		// } catch (Exception e) {
+			// System.out.println("Error! " + e.toString());
+		// }
+		
 	}
 	
 	public FPTreeHeaderElement getHeaderElement(String item) 
@@ -132,27 +137,66 @@ public class FPTree {
 		return fptn;
 	}
 	
+	/*
+	1. Compute pairwise item lift in first scan of the database along with support of the items.
+	2. Greedily select a pair of items with the highest pairwise item lift (the item with higher
+	support appears first in the order). Add this ordered pair to the F-list. Use total support
+	of the paired items to break ties, if any.
+	3. Iterate through the remaining frequent items and greedily add an item i to the F-list, such
+	that the sum of paiwise item lifts between i and the elements in the F-list is maximized.
+	
+	*/
 	public void constructFPTreeUsingPil(File inputfile) {
 		Hashtable<String,Integer> itemsFrequencyTable = new Hashtable<String, Integer>();
-
+		int n = 0;
 		try {
-			populateFreqTable(inputfile, itemsFrequencyTable); //populate freq hash table
+			n = populateFreqTable(inputfile, itemsFrequencyTable); //populate freq hash table
 		} catch(IOException ioe) {
 			System.out.println("Error! Populating freq hash failed!");
 			System.out.println(ioe.toString());
 		}
+		System.out.println(itemsFrequencyTable);
+		final int nValue = n;
 
 		Set<String> keys = itemsFrequencyTable.keySet();	// get all items in the transaction database
 
         List<Set<String>> pairs = generateAllPairs(keys);	// generate all items of length 2
+
+        Hashtable<Set<String>,Integer> itemsTwoFreqTable = new Hashtable<Set<String>, Integer>();
+        Hashtable<Set<String>,Double> pilTable = new Hashtable<Set<String>, Double>();
+        // System.out.println(pairs);
+
         pairs.forEach((pair) -> {
         	// Get i and j
 			List<String> list = new ArrayList<String>(pair);
 			String i = list.get(0);
 			String j = list.get(1);
-			
-		});
 
+			// Populate length2 items : support table
+			try {
+				populateTwoFreqTable(inputfile, itemsTwoFreqTable, pair);
+			} catch (IOException ioe) {
+				System.out.println("ERROR: " +ioe.toString());
+			}
+			// System.out.println(pair);
+			// System.out.println(itemsTwoFreqTable.get(pair));
+			// System.out.println(itemsFrequencyTable.get(i));
+			// System.out.println(itemsFrequencyTable.get(j));
+			// System.out.println(nValue);
+
+			if (!itemsTwoFreqTable.containsKey(pair)) {	// if sup(ij) == 0;
+				pilTable.put(pair, (double)0);
+			} else {	// use traditional formula pil(i,j) = (sup(ij) / (sup(i) * sup(j))) * N where N is the total number of transactions in db
+				System.out.println(itemsTwoFreqTable.get(pair));
+				double pilValue = ((double)itemsTwoFreqTable.get(pair) / ((double)itemsFrequencyTable.get(i) * (double)itemsFrequencyTable.get(j))) * (double)nValue;
+				pilTable.put(pair, pilValue);
+			}
+
+			
+
+		});
+        System.out.println(itemsTwoFreqTable);
+        System.out.println(pilTable);
 	}
 
 	/*
@@ -224,7 +268,7 @@ public class FPTree {
 		
 		cond_fptree_construction_calls++;
 	}
-	
+
 	/*
 	 * The following function parses the transaction, extracts the items from it, 
 	 * and then updates the hash table with count.
@@ -755,14 +799,43 @@ public class FPTree {
 	/*
 		Pairwise Item Lift Implementation
 	*/
-	public void populateFreqTable (File inputfile, Hashtable<String,Integer> items_frequency) throws IOException {
+	// public void populatePilTable(Set<String> item, Hashtable<Set<String>,Integer> pilTable) {
+	// 	pilTable.put(item,);
+	// }
+
+	public void extractItemsTwo(String transaction, Hashtable<Set<String>,Integer> items_frequency, Set<String> item) {
+		String []itemsArray = transaction.split("\\s+");	//scan individual items in the transaction
+		Set<String> items = new HashSet<String>(Arrays.asList(itemsArray));
+		// System.out.println(items);
+		if (items.containsAll(item)) {
+			int count = 1;
+			if (items_frequency.containsKey(item))
+				count = items_frequency.get(item) + 1;
+			items_frequency.put(item, new Integer(count));
+		}
+	}
+
+	public void populateTwoFreqTable(File inputfile, Hashtable<Set<String>,Integer> itemsTwoFreqTable, Set<String> pair) throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
         String transaction = null;
                 
         while((transaction = br.readLine()) != null) //read input file (transaction database)
-        	extractItems(transaction, 1, items_frequency);
+        	extractItemsTwo(transaction, itemsTwoFreqTable, pair);	// update counters for every 2-length item
         
         br.close(); //file reading complete
+	}
+
+	public int populateFreqTable (File inputfile, Hashtable<String,Integer> items_frequency) throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
+        String transaction = null;
+        int n = 0;
+        while((transaction = br.readLine()) != null) { //read input file (transaction database)
+        	extractItems(transaction, 1, items_frequency);
+        	n++;
+        }
+        
+        br.close(); //file reading complete
+        return n;
 	}
 
 	private static void getSubsets(List<String> superSet, int k, int idx, Set<String> current, List<Set<String>> solution) {
