@@ -149,6 +149,9 @@ public class FPTree {
 	public void constructFPTreeUsingPil(File inputfile) {
 		Hashtable<String,Integer> itemsFrequencyTable = new Hashtable<String, Integer>();
 		int n = 0;
+		// TODO: should read the input_file once and populateFreqTable and populateTwoFreqTable together for
+		// one scan/read of the database in comparison to two before; TA suggested doing N^2 approach per each transaction loaded
+		// into memory to gather 1-item and 2-itemset counts
 		try {
 			n = populateFreqTable(inputfile, itemsFrequencyTable); //populate freq hash table
 		} catch(IOException ioe) {
@@ -236,8 +239,23 @@ public class FPTree {
 		System.out.println(fTable);
 
 		List<String> pilBasedFList = new ArrayList<>();
-		pilBasedFList.add(a);	// TODO: must order a and b based on their respective supports? or doesnt matter?
-		pilBasedFList.add(b);
+		// Must order a and b based on their respective support and break ties by alphabetical order
+		int aSupp = itemsFrequencyTable.get(a);
+		int bSupp = itemsFrequencyTable.get(b);
+		if (aSupp > bSupp) {
+			pilBasedFList.add(a);
+			pilBasedFList.add(b);
+		} else if (aSupp < bSupp) {
+			pilBasedFList.add(b);
+			pilBasedFList.add(a);
+		} else if (a.charAt(0) < b.charAt(0)) { // aSupp == bSupp, break ties alphabetically
+			pilBasedFList.add(a);
+			pilBasedFList.add(b);
+		} else {
+			pilBasedFList.add(b);
+			pilBasedFList.add(a);
+		}
+		
 
 		while (!keyList.isEmpty()) {	// add all keys to the fList
 			double maxPilSum = -1;
