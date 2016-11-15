@@ -85,7 +85,6 @@ public class FPTree {
 		// } catch (Exception e) {
 			// System.out.println("Error! " + e.toString());
 		// }
-		
 	}
 	
 	public FPTreeHeaderElement getHeaderElement(String item) 
@@ -217,7 +216,7 @@ public class FPTree {
 			}
 		}
 
-		// System.out.println(highestPilPair);
+		System.out.println("Highest Pil Pair: " + highestPilPair);
 		// System.out.println(maxpil);
 		// System.out.println(itemsTwoFreqTable.get(highestPilPair));
 
@@ -235,8 +234,15 @@ public class FPTree {
 		keyList.remove(a);
 		keyList.remove(b);	// remove i,j as they've both been already added to the freq list
 
-		System.out.println(keyList);
-		System.out.println(fTable);
+		Iterator<String> iter = keyList.iterator();
+		// Filter out infrequent items amongst candidates
+		while (iter.hasNext()) {
+		    String k = iter.next();
+		    if (itemsFrequencyTable.get(k) < support_threshold)
+		        iter.remove();
+		}
+
+		System.out.println("Remaining frequent items left: " + keyList);
 
 		List<String> pilBasedFList = new ArrayList<>();
 		// Must order a and b based on their respective support and break ties by alphabetical order
@@ -255,7 +261,7 @@ public class FPTree {
 			pilBasedFList.add(b);
 			pilBasedFList.add(a);
 		}
-		
+		// TODO: what's the guarantee that that i and j are frequent items in the first place? i.e. should be added pilBasedFList
 
 		while (!keyList.isEmpty()) {	// add all keys to the fList
 			double maxPilSum = -1;
@@ -285,18 +291,24 @@ public class FPTree {
 				pilBasedFList.add(candidate);
 			}
 		}
-		System.out.println("The ascending fList using PIL metric: " + pilBasedFList);
-			
-		// createFPTreeHeaderTable(fTable);
-		
-		// try {
-		// 	secondScan(inputfile, fTable); //fp-tree will be created in the second scan
-		// } catch(IOException ioe) {
-		// 	System.out.println("Error! Second scan for FPTree construction failed !");
-		// 	System.out.println(ioe.toString());
-		// }
+		System.out.println("The fList using PIL metric (highest to lowest): " + pilBasedFList);
 
-		// fptree_construction_calls++;
+        for (String itm : pilBasedFList) {
+        	header_table.add(new FPTreeHeaderElement(itm));
+        }	// FPtree header table formed
+			
+		// System.out.println(header_table);
+
+		// first scan ends here
+
+		try {
+			secondScanUsingPil(inputfile, itemsFrequencyTable, pilBasedFList); //fp-tree will be created in the second scan
+		} catch(IOException ioe) {
+			System.out.println("Error! Second scan for FPTree construction failed !");
+			System.out.println(ioe.toString());
+		}
+
+		fptree_construction_calls++;
 	}
 
 	/*
@@ -315,7 +327,7 @@ public class FPTree {
 			System.out.println("Error! First scan for FPTree construction failed !");
 			System.out.println(ioe.toString());
 		}
-		
+
 		try 
 		{
 			secondScan(inputfile, items_frequency); //fp-tree will be created in the second scan
@@ -412,6 +424,44 @@ public class FPTree {
 	/*
 	 * Following function inserts a prefix into prefix tree/FPTree with the corresponding count.
 	 */
+
+	public void insertIntoFPTreeUsingPil(String prefix, int count, Hashtable<String,Integer> items_frequency, List<String> pilBasedFList) { 	// count = 1
+		String []items = prefix.split("\\s+");	//scan individual items in the transaction/prefix
+    	ArrayList<ItemElement> aie = new ArrayList<ItemElement>(); //placeholder for sorting the frequent 
+
+    	for(int i=0; i<items.length; i++) { 
+			if(pilBasedFList.contains(items[i])) 
+				aie.add(new ItemElement(items[i],items_frequency.get(items[i]),pilBasedFList.indexOf(items[i])));
+    	}
+    	// System.out.println(aie);
+    	// System.out.println("asdas---asdas");
+    	Collections.sort(aie); 	//prefix is sorted, we will now add it to the FPTree 
+    	// System.out.println(aie);
+
+    	FPTreeNode tmp = fptree_root;	
+    	for(int i=0; i<aie.size(); i++)	//adding the prefix in FPTree now
+    	{
+    		String f_item = aie.get(i).getItem();	//get the frequent item
+    		tmp.incrementFrequency(count);	//increment support of parent
+    		if(tmp.isChild(f_item)==false) //if child not present, add it & update the node links from the header table
+    		{
+    			FPTreeNode new_child = tmp.addChild(f_item,0);	//child added
+    			FPTreeNode last_node = getLastFPTreeNode(f_item);
+    			if(last_node==null)	//first time this item is encountered
+    			{
+    				FPTreeHeaderElement hdrelem = getHeaderElement(f_item);
+    				if(hdrelem!=null)
+    					hdrelem.setNodeLink(new_child);
+    			}
+    			else
+    				last_node.setNextNode(new_child);	//pointers updated, new child pointed by next node pointer
+    		}
+    		tmp = tmp.getChild(f_item);       		
+    	}
+    	if(tmp.getItem().equals("root")==false)
+    		tmp.incrementFrequency(count);	//increment frequency of the last child
+	}
+
 	public void insertIntoFPTree(String prefix, int count, Hashtable<String,Integer> items_frequency)
 	{
 		String []items = prefix.split("\\s+");	//scan individual items in the transaction/prefix
@@ -493,6 +543,16 @@ public class FPTree {
 	/*
 	 * second scan of transactions will create the FPTree and update the pointers in the FPTree header table.
 	 */
+	public void secondScanUsingPil(File inputfile, Hashtable<String,Integer> items_frequency, List<String> pilBasedFList) throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
+        String transaction = null;
+                
+        while((transaction = br.readLine()) != null) //read input file (transaction DB) again
+        	insertIntoFPTreeUsingPil(transaction, 1, items_frequency, pilBasedFList);
+        
+        br.close(); //file reading complete once and for all
+	}
+
 	public void secondScan(File inputfile, Hashtable<String,Integer> items_frequency) throws IOException
 	{       
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
@@ -1027,8 +1087,57 @@ public class FPTree {
 		System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
 		System.out.println("\n");
 		System.out.println("------------");
+		System.out.println("USING PAIRWISE ITEM LIFT:");
+		System.out.println("\n");
 
+		// FPTree fptPil = new FPTree(file, min_supp, true);
+		tcTime = 0;
+		startTime = System.currentTimeMillis();
 		FPTree fptPil = new FPTree(file, min_supp, true);
+		endTime   = System.currentTimeMillis();
+
+		totalTime = endTime - startTime;
+		tcTime += totalTime;
+		System.out.println("\n");
+		System.out.println("TreeSize: " + fptPil.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
+		System.out.println("\n");
+		System.out.println("------------");
+		System.out.println("Tree Details:");
+		fptPil.printTreeDetails();
+		System.out.println("\n");
+		
+		/* 1. Will print the header table. */
+		System.out.println("------------");
+		System.out.println("Header Table Information:");
+		fptPil.traverseFPTreeHeaderTable();
+		System.out.println("\n");
+
+		/* 2. Will print the prefix tree. */
+		System.out.println("------------");
+		System.out.println("Prefix Tree Information:");
+		fptPil.traverseFPTree();
+		System.out.println("\n");
+		
+		System.out.println("------------");
+		System.out.println("Tree Mining Result:");
+		/* 3. Will mine all the frequent patterns. */
+		startTime = System.currentTimeMillis();
+		fptPil.minePatternsByFPGrowth("");
+		endTime = System.currentTimeMillis();
+		totalTime = endTime - startTime;
+		tcTime += totalTime;
+		System.out.println("\n");
+		System.out.println("Mining Time: " + totalTime + " ms");
+		System.out.println("\n");
+
+		System.out.println("------------");
+		System.out.println("Function Call Statistics:");
+		fptPil.printFunctionCallStats();
+		System.out.println("\n");
+		System.out.println("------------");
+		System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
+		System.out.println("\n");
+		System.out.println("------------");
 
 	}	
 }

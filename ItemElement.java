@@ -4,6 +4,7 @@ import java.util.Comparator;
 public class ItemElement implements Comparable<ItemElement> {
 	private String item;
 	private int frequency;
+	private int pilIndex = -1;
 	
 	public ItemElement() 
 	{
@@ -15,6 +16,13 @@ public class ItemElement implements Comparable<ItemElement> {
 	{
 		this.item = item;
 		this.frequency = frequency;
+	}
+
+	public ItemElement(String item, int frequency, int pilIndex) 
+	{
+		this.item = item;
+		this.frequency = frequency;
+		this.pilIndex = pilIndex;
 	}
 	
 	public ItemElement(String item) 
@@ -32,19 +40,31 @@ public class ItemElement implements Comparable<ItemElement> {
 	{
 		return frequency;
 	}
+
+	public int getPilIndex() 
+	{
+		return pilIndex;
+	}
 	
 	@Override
 	public int compareTo(ItemElement ie) 
 	{
-		if (this.getFrequency() != ie.getFrequency())
-			return ie.getFrequency() - this.getFrequency(); //sort in descending order of frequencies
-		else 
-			return (this.getItem()).compareTo(ie.getItem()); //if frequencies are equal, use lexicographic order
+		if (this.getPilIndex() > 0) {
+			return this.getPilIndex() - ie.getPilIndex();
+		} else {
+			if (this.getFrequency() != ie.getFrequency())
+				return ie.getFrequency() - this.getFrequency(); //sort in descending order of frequencies
+			else 
+				return (this.getItem()).compareTo(ie.getItem()); //if frequencies are equal, use lexicographic order
+		}
+		
 	}
 	
 	@Override
-	public String toString() 	//<item>:<frequency>
+	public String toString() 	//<item>:<frequency>(pilIndex)
 	{
+		if (pilIndex > 0)
+			return item + ":" + frequency + "("+pilIndex+") ";
 		return item + ":" + frequency + " ";
 	}
 }
