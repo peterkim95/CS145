@@ -147,24 +147,24 @@ public class FPTree {
 	*/
 	public void constructFPTreeUsingPil(File inputfile) {
 		Hashtable<String,Integer> itemsFrequencyTable = new Hashtable<String, Integer>();
+		Hashtable<Set<String>,Integer> itemsTwoFreqTable = new Hashtable<Set<String>, Integer>();
+
 		int n = 0;
-		// TODO: should read the input_file once and populateFreqTable and populateTwoFreqTable together for
-		// one scan/read of the database in comparison to two before; TA suggested doing N^2 approach per each transaction loaded
-		// into memory to gather 1-item and 2-itemset counts
 		try {
-			n = populateFreqTable(inputfile, itemsFrequencyTable); //populate freq hash table
+			n = populateAll(inputfile, itemsFrequencyTable, itemsTwoFreqTable); //populate freq hash table
 		} catch(IOException ioe) {
 			System.out.println("Error! Populating freq hash failed!");
 			System.out.println(ioe.toString());
 		}
-		// System.out.println(itemsFrequencyTable);
+		System.out.println(itemsFrequencyTable);
+		System.out.println(itemsTwoFreqTable);
 		final int nValue = n;
 
 		Set<String> keys = itemsFrequencyTable.keySet();	// get all items in the transaction database
 
         List<Set<String>> pairs = generateAllPairs(keys);	// generate all items of length 2
 
-        Hashtable<Set<String>,Integer> itemsTwoFreqTable = new Hashtable<Set<String>, Integer>();
+       
         Hashtable<Set<String>,Double> pilTable = new Hashtable<Set<String>, Double>();
         // System.out.println(pairs);
 
@@ -174,12 +174,6 @@ public class FPTree {
 			String i = list.get(0);
 			String j = list.get(1);
 
-			// Populate length2 items : support table
-			try {
-				populateTwoFreqTable(inputfile, itemsTwoFreqTable, pair);
-			} catch (IOException ioe) {
-				System.out.println("ERROR: " +ioe.toString());
-			}
 			// System.out.println(pair);
 			// System.out.println(itemsTwoFreqTable.get(pair));
 			// System.out.println(itemsFrequencyTable.get(i));
@@ -385,8 +379,9 @@ public class FPTree {
 	 * The following function parses the transaction, extracts the items from it, 
 	 * and then updates the hash table with count.
 	 */
-	public void extractItems(String transaction, int count, Hashtable<String,Integer> items_frequency)
+	public Set<String> extractItems(String transaction, int count, Hashtable<String,Integer> items_frequency)
 	{
+		Set<String> localKeyset = new HashSet<String>();
 		String []items = transaction.split("\\s+");	//scan individual items in the transaction
     	for(int i=0; i<items.length; i++) 
     	{ 
@@ -394,7 +389,8 @@ public class FPTree {
 			if(items_frequency.containsKey(items[i])) 			//if this item already encountered before
 				freq = items_frequency.get(items[i]) + count; //increment frequency
 			items_frequency.put(items[i],new Integer(freq)); //update item with new frequency
-    	}	
+    	}
+    	return localKeyset;
 	}
 	
 	/*
@@ -991,6 +987,23 @@ public class FPTree {
         int n = 0;
         while((transaction = br.readLine()) != null) { //read input file (transaction database)
         	extractItems(transaction, 1, items_frequency);
+        	n++;
+        }
+        
+        br.close(); //file reading complete
+        return n;
+	}
+
+	public int populateAll (File inputfile, Hashtable<String,Integer> items_frequency, Hashtable<Set<String>,Integer> itemsTwoFreqTable) throws IOException{
+		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
+        String transaction = null;
+        int n = 0;
+        while((transaction = br.readLine()) != null) { //read input file (transaction database)
+        	Set<String> localKeyset = extractItems(transaction, 1, items_frequency);
+ 			List<Set<String>> localPairs = generateAllPairs(localKeyset);
+ 			for (Set<String>localPair: localPairs){
+ 				extractItemsTwo(transaction, itemsTwoFreqTable, localPair);
+ 			}
         	n++;
         }
         
