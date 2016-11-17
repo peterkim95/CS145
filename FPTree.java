@@ -162,13 +162,12 @@ public class FPTree {
 
 		Set<String> keys = itemsFrequencyTable.keySet();	// get all items in the transaction database
 
-        List<Set<String>> pairs = generateAllPairs(keys);	// generate all items of length 2
-
-       
-        Hashtable<Set<String>,Double> pilTable = new Hashtable<Set<String>, Double>();
+		List<Set<String>> pairs = generateAllPairs(keys);	// generate all items of length 2
+  
+		Hashtable<Set<String>,Double> pilTable = new Hashtable<Set<String>, Double>();
         // System.out.println(pairs);
 
-        pairs.forEach((pair) -> {
+		pairs.forEach((pair) -> {
         	// Get i and j
 			List<String> list = new ArrayList<String>(pair);
 			String i = list.get(0);
@@ -189,11 +188,11 @@ public class FPTree {
 			}
 		});
 
-        // System.out.println(itemsTwoFreqTable);
-        // System.out.println(pilTable);
+		// System.out.println(itemsTwoFreqTable);
+		// System.out.println(pilTable);
 
-        // TODO: more efficient way to this?
-        // Find highest PIL item - breaking ties with sup if necessary
+		// TODO: more efficient way to this?
+		// Find highest PIL item - breaking ties with sup if necessary
 		// int totsup = -1;
 		double maxpil = -1;
 		Set<String> highestPilPair = null;
