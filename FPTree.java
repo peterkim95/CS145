@@ -384,6 +384,7 @@ public class FPTree {
 		String []items = transaction.split("\\s+");	//scan individual items in the transaction
     	for(int i=0; i<items.length; i++) 
     	{ 
+    		localKeyset.add(items[i]);
     		int freq = count;
 			if(items_frequency.containsKey(items[i])) 			//if this item already encountered before
 				freq = items_frequency.get(items[i]) + count; //increment frequency
