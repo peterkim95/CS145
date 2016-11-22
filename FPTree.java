@@ -156,8 +156,8 @@ public class FPTree {
 			System.out.println("Error! Populating freq hash failed!");
 			System.out.println(ioe.toString());
 		}
-		System.out.println(itemsFrequencyTable);
-		System.out.println(itemsTwoFreqTable);
+		//System.out.println(itemsFrequencyTable);
+		//System.out.println(itemsTwoFreqTable);
 		final int nValue = n;
 
 		Set<String> keys = itemsFrequencyTable.keySet();	// get all items in the transaction database
