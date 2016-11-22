@@ -209,7 +209,7 @@ public class FPTree {
 			}
 		}
 
-		System.out.println("Highest Pil Pair: " + highestPilPair);
+		// System.out.println("Highest Pil Pair: " + highestPilPair);
 		// System.out.println(maxpil);
 		// System.out.println(itemsTwoFreqTable.get(highestPilPair));
 
@@ -235,7 +235,7 @@ public class FPTree {
 		        iter.remove();
 		}
 
-		System.out.println("Remaining frequent items left: " + keyList);
+		// System.out.println("Remaining frequent items left: " + keyList);
 
 		List<String> pilBasedFList = new ArrayList<>();
 		// Must order a and b based on their respective support and break ties by alphabetical order
@@ -284,7 +284,8 @@ public class FPTree {
 				pilBasedFList.add(candidate);
 			}
 		}
-		System.out.println("The fList using PIL metric (highest to lowest): " + pilBasedFList);
+		
+		// System.out.println("The fList using PIL metric (highest to lowest): " + pilBasedFList);
 
         for (String itm : pilBasedFList) {
         	header_table.add(new FPTreeHeaderElement(itm));
@@ -622,9 +623,9 @@ public class FPTree {
 	//For Debugging => Pre-Order traversal of FPTree (node first and then all of its children)
 	public void traverseFPTree(FPTreeNode node, int depth) 
 	{
-		for(int i=0; i<depth; i++)	//tabs printed as per the depth
-			System.out.print("\t");
-		System.out.print("-" + node + "\n");	//print node : its support : no. of children
+		// for(int i=0; i<depth; i++)	//tabs printed as per the depth
+		// 	System.out.print("\t");
+		// System.out.print("-" + node + "\n");	//print node : its support : no. of children
 		for(int i=0; i<node.getChildrenCount(); i++)
 		{
 			FPTreeNode tmp = node.getChild(i);
@@ -643,14 +644,14 @@ public class FPTree {
 	{
 		for(int i=0; i<header_table.size(); i++)
 		{
-			System.out.print(header_table.get(i).getItem()+": "); //print item
+			// System.out.print(header_table.get(i).getItem()+": "); //print item
 			FPTreeNode tmp = header_table.get(i).getNodeLink();
 			while(tmp!=null)
 			{
-				System.out.print("-> "+tmp);
+				// System.out.print("-> "+tmp);
 				tmp = tmp.getNextNode();
 			}
-			System.out.print("\n");
+			// System.out.print("\n");
 		}	
 	}
 	
@@ -674,7 +675,7 @@ public class FPTree {
 	{
 		String prev = curr;
 		curr = prev + " " + fptn.getItem();
-		System.out.print(curr + " : " + fptn.getFrequency() + "\n");	//print combination with support
+		// System.out.print(curr + " : " + fptn.getFrequency() + "\n");	//print combination with support
 		if(fptn.getChildrenCount()==1)
 		{
 			genAllCombinations(fptn.getChild(0), prev);		//combinations not including the item at this index
@@ -773,7 +774,7 @@ public class FPTree {
 			{
 				FPTreeHeaderElement elmnt = header_table.get(i);
 				String itemset = curr + " " + elmnt.getItem() + " : " + this.getIndividualItemSupport(elmnt);
-				System.out.print(itemset + "\n");	//print frequent item set containing this element
+				// System.out.print(itemset + "\n");	//print frequent item set containing this element
 				
 				ArrayList<String> conditional_pattern_base = this.getConditionalPatternBase(elmnt);	//get the conditional pattern base
 				FPTree subtree = new FPTree(conditional_pattern_base, support_threshold);	//create FP-tree from this conditional pattern base
@@ -817,7 +818,7 @@ public class FPTree {
 					continue;				//then skip it, no need to deal with its projected database
 				
 				String itemset = curr + " " + elmnt.getItem() + " : " + prj_supp;
-				System.out.print(itemset + "\n");	//print frequent item set containing this element
+				// System.out.print(itemset + "\n");	//print frequent item set containing this element
 				
 				ArrayList<String> conditional_pattern_base = this.getConditionalPatternBase(elmnt);	//get the conditional pattern base
 				FPTree subtree = new FPTree(conditional_pattern_base, support_val);	//create FP-tree from projected database, with higher support
@@ -1069,16 +1070,16 @@ public class FPTree {
 		System.out.println("\n");
 		
 		/* 1. Will print the header table. */
-		System.out.println("------------");
-		System.out.println("Header Table Information:");
+		// System.out.println("------------");
+		// System.out.println("Header Table Information:");
 		fpt.traverseFPTreeHeaderTable();
-		System.out.println("\n");
+		// System.out.println("\n");
 
 		/* 2. Will print the prefix tree. */
-		System.out.println("------------");
-		System.out.println("Prefix Tree Information:");
+		// System.out.println("------------");
+		// System.out.println("Prefix Tree Information:");
 		fpt.traverseFPTree();
-		System.out.println("\n");
+		// System.out.println("\n");
 		
 		System.out.println("------------");
 		System.out.println("Tree Mining Result:");
@@ -1120,16 +1121,16 @@ public class FPTree {
 		System.out.println("\n");
 		
 		/* 1. Will print the header table. */
-		System.out.println("------------");
-		System.out.println("Header Table Information:");
+		// System.out.println("------------");
+		// System.out.println("Header Table Information:");
 		fptPil.traverseFPTreeHeaderTable();
-		System.out.println("\n");
+		// System.out.println("\n");
 
-		/* 2. Will print the prefix tree. */
-		System.out.println("------------");
-		System.out.println("Prefix Tree Information:");
+		// /* 2. Will print the prefix tree. */
+		// System.out.println("------------");
+		// System.out.println("Prefix Tree Information:");
 		fptPil.traverseFPTree();
-		System.out.println("\n");
+		// System.out.println("\n");
 		
 		System.out.println("------------");
 		System.out.println("Tree Mining Result:");
