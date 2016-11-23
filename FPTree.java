@@ -150,16 +150,17 @@ public class FPTree {
 		Hashtable<Set<String>,Integer> itemsTwoFreqTable = new Hashtable<Set<String>, Integer>();
 		List<Set<String>> pairs = new ArrayList<Set<String>>();
 		int n = 0;
+		// System.out.println("asds");
 		try {
 			n = populateAll(inputfile, itemsFrequencyTable, itemsTwoFreqTable, pairs); //populate freq hash table
 		} catch(IOException ioe) {
 			System.out.println("Error! Populating freq hash failed!");
 			System.out.println(ioe.toString());
 		}
-		//System.out.println(itemsFrequencyTable);
-		//System.out.println(itemsTwoFreqTable);
+		// System.out.println(itemsFrequencyTable);
+		// System.out.println(itemsTwoFreqTable);
 		final int nValue = n;
-		System.out.println(pairs);
+		// System.out.println(pairs);
 		Set<String> keys = itemsFrequencyTable.keySet();	// get all items in the transaction database
 
 		// List<Set<String>> pairs = generateAllPairs(keys);	// generate all items of length 2
@@ -1045,22 +1046,22 @@ public class FPTree {
 
 	*/
 
-	// private static void getSubsets(List<String> superSet, int k, int idx, Set<String> current, List<Set<String>> solution) {
-	//     //successful stop clause
-	//     if (current.size() == k) {
-	//         solution.add(new HashSet<>(current));
-	//         return;
-	//     }
-	//     //unseccessful stop clause
-	//     if (idx == superSet.size()) return;
-	//     String x = superSet.get(idx);
-	//     current.add(x);
-	//     //"guess" x is in the subset
-	//     getSubsets(superSet, k, idx+1, current, solution);
-	//     current.remove(x);
-	//     //"guess" x is not in the subset
-	//     getSubsets(superSet, k, idx+1, current, solution);
-	// }
+	private static void getSubsets(List<String> superSet, int k, int idx, Set<String> current, List<Set<String>> solution) {
+	    //successful stop clause
+	    if (current.size() == k) {
+	        solution.add(new HashSet<>(current));
+	        return;
+	    }
+	    //unseccessful stop clause
+	    if (idx == superSet.size()) return;
+	    String x = superSet.get(idx);
+	    current.add(x);
+	    //"guess" x is in the subset
+	    getSubsets(superSet, k, idx+1, current, solution);
+	    current.remove(x);
+	    //"guess" x is not in the subset
+	    getSubsets(superSet, k, idx+1, current, solution);
+	}
 
 
 	public List<Set<String>> generateAllPairs(Set<String> keyset) {
@@ -1068,39 +1069,39 @@ public class FPTree {
 		List<Set<String>> res = new ArrayList<>();
 		s.addAll(keyset);
 
-	    int k = 2;
+	 //    int k = 2;
 	    
-	    // List<String> s = new ArrayList<String>(Arrays.asList("a","b","c","d"));
-	    // Set<String> s = new HashSet<String>(Arrays.asList("a","b","c","d"));
-	      int n = s.size();
-	      int sub = 1 << n;
+	 //    // List<String> s = new ArrayList<String>(Arrays.asList("a","b","c","d"));
+	 //    // Set<String> s = new HashSet<String>(Arrays.asList("a","b","c","d"));
+	 //      int n = s.size();
+	 //      int sub = 1 << n;
 	      
-	      for (int i = 0; i < sub; i++) {
-	        int count = 0;
-	        for (int j = 0; j < n; j++) {
-	          if ((i&(1<<j)) != 0)
-	            count++;
-	        }
-	        if (count == k) {
-	          Set<String> tmp = new HashSet<String>();
-	          for (int j = 0; j < n; j++) {
-	            if ((i&(1<<j))!=0) {
-	              // String x = Character.toString(s.charAt(j));;
-	              tmp.add(s.get(j));
+	 //      for (int i = 0; i < sub; i++) {
+	 //        int count = 0;
+	 //        for (int j = 0; j < n; j++) {
+	 //          if ((i&(1<<j)) != 0)
+	 //            count++;
+	 //        }
+	 //        if (count == k) {
+	 //          Set<String> tmp = new HashSet<String>();
+	 //          for (int j = 0; j < n; j++) {
+	 //            if ((i&(1<<j))!=0) {
+	 //              // String x = Character.toString(s.charAt(j));;
+	 //              tmp.add(s.get(j));
 	              
-	              // System.out.print(s.charAt(j));
-	            }
+	 //              // System.out.print(s.charAt(j));
+	 //            }
 	              
-	          }
-	          res.add(tmp);
-	        }
+	 //          }
+	 //          res.add(tmp);
+	 //        }
 	        
-	      }
-	    // System.out.println(res);
+	 //      }
+	 //    // System.out.println(res);
 	    
 	  
 
-		// getSubsets(superSet, 2, 0, new HashSet<String>(), res);	// look for all subsets of length k = 2
+		getSubsets(s, 2, 0, new HashSet<String>(), res);	// look for all subsets of length k = 2
 		return res;
 	}
 
@@ -1123,51 +1124,51 @@ public class FPTree {
 		
 		long startTime, endTime, totalTime, tcTime = 0;  
 
-		startTime = System.currentTimeMillis();
-		FPTree fpt = new FPTree(file, min_supp);
-		endTime   = System.currentTimeMillis();
-		totalTime = endTime - startTime;
-		tcTime += totalTime;
-		System.out.println("\n");
-		System.out.println("TreeSize: " + fpt.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
-		System.out.println("\n");
-		System.out.println("------------");
-		System.out.println("Tree Details:");
-		fpt.printTreeDetails();
-		System.out.println("\n");
-		
-		/* 1. Will print the header table. */
-		// System.out.println("------------");
-		// System.out.println("Header Table Information:");
-		fpt.traverseFPTreeHeaderTable();
-		// System.out.println("\n");
+	// startTime = System.currentTimeMillis();
+	// FPTree fpt = new FPTree(file, min_supp);
+	// endTime   = System.currentTimeMillis();
+	// totalTime = endTime - startTime;
+	// tcTime += totalTime;
+	// System.out.println("\n");
+	// System.out.println("TreeSize: " + fpt.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
+	// System.out.println("\n");
+	// System.out.println("------------");
+	// System.out.println("Tree Details:");
+	// fpt.printTreeDetails();
+	// System.out.println("\n");
+	
+	// /* 1. Will print the header table. */
+	// // System.out.println("------------");
+	// // System.out.println("Header Table Information:");
+	// fpt.traverseFPTreeHeaderTable();
+	// // System.out.println("\n");
 
-		/* 2. Will print the prefix tree. */
-		// System.out.println("------------");
-		// System.out.println("Prefix Tree Information:");
-		fpt.traverseFPTree();
-		// System.out.println("\n");
-		
-		System.out.println("------------");
-		System.out.println("Tree Mining Result:");
-		/* 3. Will mine all the frequent patterns. */
-		startTime = System.currentTimeMillis();
-		fpt.minePatternsByFPGrowth("");
-		endTime = System.currentTimeMillis();
-		totalTime = endTime - startTime;
-		tcTime += totalTime;
-		System.out.println("\n");
-		System.out.println("Mining Time: " + totalTime + " ms");
-		System.out.println("\n");
+	// /* 2. Will print the prefix tree. */
+	// // System.out.println("------------");
+	// // System.out.println("Prefix Tree Information:");
+	// fpt.traverseFPTree();
+	// // System.out.println("\n");
+	
+	// System.out.println("------------");
+	// System.out.println("Tree Mining Result:");
+	// /* 3. Will mine all the frequent patterns. */
+	// startTime = System.currentTimeMillis();
+	// fpt.minePatternsByFPGrowth("");
+	// endTime = System.currentTimeMillis();
+	// totalTime = endTime - startTime;
+	// tcTime += totalTime;
+	// System.out.println("\n");
+	// System.out.println("Mining Time: " + totalTime + " ms");
+	// System.out.println("\n");
 
-		System.out.println("------------");
-		System.out.println("Function Call Statistics:");
-		fpt.printFunctionCallStats();
-		System.out.println("\n");
-		System.out.println("------------");
-		System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
-		System.out.println("\n");
-		System.out.println("------------");
+	// System.out.println("------------");
+	// System.out.println("Function Call Statistics:");
+	// fpt.printFunctionCallStats();
+	// System.out.println("\n");
+	// System.out.println("------------");
+	// 	System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
+	// 	System.out.println("\n");
+	// 	System.out.println("------------");
 		System.out.println("USING PAIRWISE ITEM LIFT:");
 		System.out.println("\n");
 
