@@ -148,10 +148,10 @@ public class FPTree {
 	public void constructFPTreeUsingPil(File inputfile) {
 		Hashtable<String,Integer> itemsFrequencyTable = new Hashtable<String, Integer>();
 		Hashtable<Set<String>,Integer> itemsTwoFreqTable = new Hashtable<Set<String>, Integer>();
-
+		List<Set<String>> pairs = new ArrayList<Set<String>>();
 		int n = 0;
 		try {
-			n = populateAll(inputfile, itemsFrequencyTable, itemsTwoFreqTable); //populate freq hash table
+			n = populateAll(inputfile, itemsFrequencyTable, itemsTwoFreqTable, pairs); //populate freq hash table
 		} catch(IOException ioe) {
 			System.out.println("Error! Populating freq hash failed!");
 			System.out.println(ioe.toString());
@@ -159,10 +159,10 @@ public class FPTree {
 		//System.out.println(itemsFrequencyTable);
 		//System.out.println(itemsTwoFreqTable);
 		final int nValue = n;
-
+		System.out.println(pairs);
 		Set<String> keys = itemsFrequencyTable.keySet();	// get all items in the transaction database
 
-		List<Set<String>> pairs = generateAllPairs(keys);	// generate all items of length 2
+		// List<Set<String>> pairs = generateAllPairs(keys);	// generate all items of length 2
   
 		Hashtable<Set<String>,Double> pilTable = new Hashtable<Set<String>, Double>();
         // System.out.println(pairs);
@@ -255,20 +255,24 @@ public class FPTree {
 			pilBasedFList.add(a);
 		}
 		// TODO: what's the guarantee that that i and j are frequent items in the first place? i.e. should be added pilBasedFList
-
+		// System.out.println(pilTable);
 		while (!keyList.isEmpty()) {	// add all keys to the fList
 			double maxPilSum = -1;
 			String candidate = null;
 			for (String i : keyList) {
+				// System.out.println("i:" + i);
 				double pilSum = 0;
 				Set<String> tmpSet = fTable.keySet();
 				List<String> fList = new ArrayList<>();
 				fList.addAll(tmpSet);
+				// System.out.println(fList);
 				for (String key : fList) {
+					// System.out.println(key);
 					Set<String> s = new HashSet<String>();
 					s.add(i);
 					s.add(key);
-					pilSum += pilTable.get(s);
+					if (pilTable.containsKey(s))
+						pilSum += pilTable.get(s);
 				}
 
 				if (pilSum > maxPilSum) {
@@ -995,15 +999,20 @@ public class FPTree {
         return n;
 	}
 
-	public int populateAll (File inputfile, Hashtable<String,Integer> items_frequency, Hashtable<Set<String>,Integer> itemsTwoFreqTable) throws IOException{
+	public int populateAll (File inputfile, Hashtable<String,Integer> items_frequency, Hashtable<Set<String>,Integer> itemsTwoFreqTable, List<Set<String>> pairs) throws IOException{
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
         String transaction = null;
         int n = 0;
         while((transaction = br.readLine()) != null) { //read input file (transaction database)
         	Set<String> localKeyset = extractItems(transaction, 1, items_frequency);
  			List<Set<String>> localPairs = generateAllPairs(localKeyset);
- 			for (Set<String>localPair: localPairs){
- 				extractItemsTwo(transaction, itemsTwoFreqTable, localPair);
+ 			pairs.addAll(localPairs);
+ 			for (Set<String> localPair: localPairs){
+ 				// extractItemsTwo(transaction, itemsTwoFreqTable, localPair);
+ 				int count = 1;
+ 				if (itemsTwoFreqTable.containsKey(localPair))
+ 					count = itemsTwoFreqTable.get(localPair) + 1;
+ 				itemsTwoFreqTable.put(localPair, new Integer(count));
  			}
         	n++;
         }
@@ -1012,28 +1021,86 @@ public class FPTree {
         return n;
 	}
 
-	private static void getSubsets(List<String> superSet, int k, int idx, Set<String> current, List<Set<String>> solution) {
-	    //successful stop clause
-	    if (current.size() == k) {
-	        solution.add(new HashSet<>(current));
-	        return;
-	    }
-	    //unseccessful stop clause
-	    if (idx == superSet.size()) return;
-	    String x = superSet.get(idx);
-	    current.add(x);
-	    //"guess" x is in the subset
-	    getSubsets(superSet, k, idx+1, current, solution);
-	    current.remove(x);
-	    //"guess" x is not in the subset
-	    getSubsets(superSet, k, idx+1, current, solution);
-	}
+	/*
+	String s = "abcd";
+    int k = 2;
+    int n = s.length();
+    int sub = 1 << n;
+    
+    for (int i = 0; i < sub; i++) {
+      int count = 0;
+      for (int j = 0; j < n; j++) {
+        if ((i&(1<<j)) != 0)
+          count++;
+      }
+      if (count == k) {
+        for (int j = 0; j < n; j++) {
+          if ((i&(1<<j))!=0)
+            System.out.print(s.charAt(j));
+        }
+        System.out.println();
+      }
+      
+    }
+
+	*/
+
+	// private static void getSubsets(List<String> superSet, int k, int idx, Set<String> current, List<Set<String>> solution) {
+	//     //successful stop clause
+	//     if (current.size() == k) {
+	//         solution.add(new HashSet<>(current));
+	//         return;
+	//     }
+	//     //unseccessful stop clause
+	//     if (idx == superSet.size()) return;
+	//     String x = superSet.get(idx);
+	//     current.add(x);
+	//     //"guess" x is in the subset
+	//     getSubsets(superSet, k, idx+1, current, solution);
+	//     current.remove(x);
+	//     //"guess" x is not in the subset
+	//     getSubsets(superSet, k, idx+1, current, solution);
+	// }
+
 
 	public List<Set<String>> generateAllPairs(Set<String> keyset) {
-		List<String> superSet = new ArrayList<>();
+		List<String> s = new ArrayList<>();
 		List<Set<String>> res = new ArrayList<>();
-		superSet.addAll(keyset);
-		getSubsets(superSet, 2, 0, new HashSet<String>(), res);	// look for all subsets of length k = 2
+		s.addAll(keyset);
+
+	    int k = 2;
+	    
+	    // List<String> s = new ArrayList<String>(Arrays.asList("a","b","c","d"));
+	    // Set<String> s = new HashSet<String>(Arrays.asList("a","b","c","d"));
+	      int n = s.size();
+	      int sub = 1 << n;
+	      
+	      for (int i = 0; i < sub; i++) {
+	        int count = 0;
+	        for (int j = 0; j < n; j++) {
+	          if ((i&(1<<j)) != 0)
+	            count++;
+	        }
+	        if (count == k) {
+	          Set<String> tmp = new HashSet<String>();
+	          for (int j = 0; j < n; j++) {
+	            if ((i&(1<<j))!=0) {
+	              // String x = Character.toString(s.charAt(j));;
+	              tmp.add(s.get(j));
+	              
+	              // System.out.print(s.charAt(j));
+	            }
+	              
+	          }
+	          res.add(tmp);
+	        }
+	        
+	      }
+	    // System.out.println(res);
+	    
+	  
+
+		// getSubsets(superSet, 2, 0, new HashSet<String>(), res);	// look for all subsets of length k = 2
 		return res;
 	}
 
