@@ -1069,38 +1069,6 @@ public class FPTree {
 		List<Set<String>> res = new ArrayList<>();
 		s.addAll(keyset);
 
-	 //    int k = 2;
-	    
-	 //    // List<String> s = new ArrayList<String>(Arrays.asList("a","b","c","d"));
-	 //    // Set<String> s = new HashSet<String>(Arrays.asList("a","b","c","d"));
-	 //      int n = s.size();
-	 //      int sub = 1 << n;
-	      
-	 //      for (int i = 0; i < sub; i++) {
-	 //        int count = 0;
-	 //        for (int j = 0; j < n; j++) {
-	 //          if ((i&(1<<j)) != 0)
-	 //            count++;
-	 //        }
-	 //        if (count == k) {
-	 //          Set<String> tmp = new HashSet<String>();
-	 //          for (int j = 0; j < n; j++) {
-	 //            if ((i&(1<<j))!=0) {
-	 //              // String x = Character.toString(s.charAt(j));;
-	 //              tmp.add(s.get(j));
-	              
-	 //              // System.out.print(s.charAt(j));
-	 //            }
-	              
-	 //          }
-	 //          res.add(tmp);
-	 //        }
-	        
-	 //      }
-	 //    // System.out.println(res);
-	    
-	  
-
 		getSubsets(s, 2, 0, new HashSet<String>(), res);	// look for all subsets of length k = 2
 		return res;
 	}
@@ -1110,116 +1078,117 @@ public class FPTree {
 		String input_data_filename;
 		int min_supp = 1;
 
-		if(args.length>2)
+		if(args.length>3)
 		{
 			System.out.println("Improper Usage! Number of arguments cannot be more than 2.");
 			System.out.println("Please provide input filename and [optional] minimum support.");
 			System.exit(0);
 		}
-		else if(args.length==2)
+		else if(args.length==3)
 			min_supp = Integer.parseInt(args[1]);
 
 		input_data_filename = "" + args[0];
 		File file = new File(input_data_filename);
 		
 		long startTime, endTime, totalTime, tcTime = 0;  
+		if ("fp".equals(args[2])) {
+			startTime = System.currentTimeMillis();
+			FPTree fpt = new FPTree(file, min_supp);
+			endTime   = System.currentTimeMillis();
+			totalTime = endTime - startTime;
+			tcTime += totalTime;
+			System.out.println("\n");
+			System.out.println("TreeSize: " + fpt.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
+			System.out.println("\n");
+			System.out.println("------------");
+			System.out.println("Tree Details:");
+			fpt.printTreeDetails();
+			System.out.println("\n");
+			
+			/* 1. Will print the header table. */
+			// System.out.println("------------");
+			// System.out.println("Header Table Information:");
+			fpt.traverseFPTreeHeaderTable();
+			// System.out.println("\n");
 
-	// startTime = System.currentTimeMillis();
-	// FPTree fpt = new FPTree(file, min_supp);
-	// endTime   = System.currentTimeMillis();
-	// totalTime = endTime - startTime;
-	// tcTime += totalTime;
-	// System.out.println("\n");
-	// System.out.println("TreeSize: " + fpt.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
-	// System.out.println("\n");
-	// System.out.println("------------");
-	// System.out.println("Tree Details:");
-	// fpt.printTreeDetails();
-	// System.out.println("\n");
-	
-	// /* 1. Will print the header table. */
-	// // System.out.println("------------");
-	// // System.out.println("Header Table Information:");
-	// fpt.traverseFPTreeHeaderTable();
-	// // System.out.println("\n");
+			/* 2. Will print the prefix tree. */
+			// System.out.println("------------");
+			// System.out.println("Prefix Tree Information:");
+			fpt.traverseFPTree();
+			// System.out.println("\n");
+			
+			System.out.println("------------");
+			System.out.println("Tree Mining Result:");
+			/* 3. Will mine all the frequent patterns. */
+			startTime = System.currentTimeMillis();
+			fpt.minePatternsByFPGrowth("");
+			endTime = System.currentTimeMillis();
+			totalTime = endTime - startTime;
+			tcTime += totalTime;
+			System.out.println("\n");
+			System.out.println("Mining Time: " + totalTime + " ms");
+			System.out.println("\n");
 
-	// /* 2. Will print the prefix tree. */
-	// // System.out.println("------------");
-	// // System.out.println("Prefix Tree Information:");
-	// fpt.traverseFPTree();
-	// // System.out.println("\n");
-	
-	// System.out.println("------------");
-	// System.out.println("Tree Mining Result:");
-	// /* 3. Will mine all the frequent patterns. */
-	// startTime = System.currentTimeMillis();
-	// fpt.minePatternsByFPGrowth("");
-	// endTime = System.currentTimeMillis();
-	// totalTime = endTime - startTime;
-	// tcTime += totalTime;
-	// System.out.println("\n");
-	// System.out.println("Mining Time: " + totalTime + " ms");
-	// System.out.println("\n");
+			System.out.println("------------");
+			System.out.println("Function Call Statistics:");
+			fpt.printFunctionCallStats();
+			System.out.println("\n");
+			System.out.println("------------");
+			System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
+			System.out.println("\n");
+			System.out.println("------------");
+		} else if ("pil".equals(args[2])) {
+			System.out.println("USING PAIRWISE ITEM LIFT:");
+			System.out.println("\n");
 
-	// System.out.println("------------");
-	// System.out.println("Function Call Statistics:");
-	// fpt.printFunctionCallStats();
-	// System.out.println("\n");
-	// System.out.println("------------");
-	// 	System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
-	// 	System.out.println("\n");
-	// 	System.out.println("------------");
-		System.out.println("USING PAIRWISE ITEM LIFT:");
-		System.out.println("\n");
+			startTime = System.currentTimeMillis();
+			FPTree fptPil = new FPTree(file, min_supp, true);
+			endTime   = System.currentTimeMillis();
 
-		// FPTree fptPil = new FPTree(file, min_supp, true);
-		tcTime = 0;
-		startTime = System.currentTimeMillis();
-		FPTree fptPil = new FPTree(file, min_supp, true);
-		endTime   = System.currentTimeMillis();
+			totalTime = endTime - startTime;
+			tcTime += totalTime;
+			System.out.println("\n");
+			System.out.println("TreeSize: " + fptPil.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
+			System.out.println("\n");
+			System.out.println("------------");
+			System.out.println("Tree Details:");
+			fptPil.printTreeDetails();
+			System.out.println("\n");
+			
+			/* 1. Will print the header table. */
+			// System.out.println("------------");
+			// System.out.println("Header Table Information:");
+			fptPil.traverseFPTreeHeaderTable();
+			// System.out.println("\n");
 
-		totalTime = endTime - startTime;
-		tcTime += totalTime;
-		System.out.println("\n");
-		System.out.println("TreeSize: " + fptPil.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
-		System.out.println("\n");
-		System.out.println("------------");
-		System.out.println("Tree Details:");
-		fptPil.printTreeDetails();
-		System.out.println("\n");
+			// /* 2. Will print the prefix tree. */
+			// System.out.println("------------");
+			// System.out.println("Prefix Tree Information:");
+			fptPil.traverseFPTree();
+			// System.out.println("\n");
+			
+			System.out.println("------------");
+			System.out.println("Tree Mining Result:");
+			/* 3. Will mine all the frequent patterns. */
+			startTime = System.currentTimeMillis();
+			fptPil.minePatternsByFPGrowth("");
+			endTime = System.currentTimeMillis();
+			totalTime = endTime - startTime;
+			tcTime += totalTime;
+			System.out.println("\n");
+			System.out.println("Mining Time: " + totalTime + " ms");
+			System.out.println("\n");
+
+			System.out.println("------------");
+			System.out.println("Function Call Statistics:");
+			fptPil.printFunctionCallStats();
+			System.out.println("\n");
+			System.out.println("------------");
+			System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
+			System.out.println("\n");
+			System.out.println("------------");
+
+		}
 		
-		/* 1. Will print the header table. */
-		// System.out.println("------------");
-		// System.out.println("Header Table Information:");
-		fptPil.traverseFPTreeHeaderTable();
-		// System.out.println("\n");
-
-		// /* 2. Will print the prefix tree. */
-		// System.out.println("------------");
-		// System.out.println("Prefix Tree Information:");
-		fptPil.traverseFPTree();
-		// System.out.println("\n");
-		
-		System.out.println("------------");
-		System.out.println("Tree Mining Result:");
-		/* 3. Will mine all the frequent patterns. */
-		startTime = System.currentTimeMillis();
-		fptPil.minePatternsByFPGrowth("");
-		endTime = System.currentTimeMillis();
-		totalTime = endTime - startTime;
-		tcTime += totalTime;
-		System.out.println("\n");
-		System.out.println("Mining Time: " + totalTime + " ms");
-		System.out.println("\n");
-
-		System.out.println("------------");
-		System.out.println("Function Call Statistics:");
-		fptPil.printFunctionCallStats();
-		System.out.println("\n");
-		System.out.println("------------");
-		System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
-		System.out.println("\n");
-		System.out.println("------------");
-
 	}	
 }
