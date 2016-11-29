@@ -18,6 +18,7 @@
 
 import java.io.*;
 import java.util.*;
+import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator;
 
 
 public class FPTree {
@@ -1090,6 +1091,9 @@ public class FPTree {
 			tcTime += totalTime;
 			System.out.println("TreeSize: " + fpt.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms\n");
 			System.out.println("------------");
+            System.out.println("Memory Size (bytes): ");
+            System.out.println(ObjectSizeCalculator.getObjectSize(fpt));
+            System.out.println("------------");
 			System.out.println("Tree Details:");
 			fpt.printTreeDetails();
 			System.out.println("\n");
@@ -1133,6 +1137,9 @@ public class FPTree {
 			tcTime += totalTime;
 			System.out.println("TreeSize: " + fptPil.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms\n");
 			System.out.println("------------");
+            System.out.println("Memory Size (bytes): ");
+            System.out.println(ObjectSizeCalculator.getObjectSize(fptPil));
+            System.out.println("------------");
 			System.out.println("Tree Details:");
 			fptPil.printTreeDetails();
 			System.out.println("\n");
