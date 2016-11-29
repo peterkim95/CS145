@@ -143,8 +143,8 @@ public class FPTree {
 	of the paired items to break ties, if any.
 	3. Iterate through the remaining frequent items and greedily add an item i to the F-list, such
 	that the sum of paiwise item lifts between i and the elements in the F-list is maximized.
-	
 	*/
+
 	public void constructFPTreeUsingPil(File inputfile) {
 		Hashtable<String,Integer> itemsFrequencyTable = new Hashtable<String, Integer>();
 		Hashtable<Set<String>,Integer> itemsTwoFreqTable = new Hashtable<Set<String>, Integer>();
@@ -168,8 +168,10 @@ public class FPTree {
 		Hashtable<Set<String>,Double> pilTable = new Hashtable<Set<String>, Double>();
         // System.out.println(pairs);
 
-		pairs.forEach((pair) -> {
-        	// Get i and j
+		double maxpil = -1;
+		Set<String> highestPilPair = null;
+		for (Set<String> pair : pairs) {
+			// Get i and j
 			List<String> list = new ArrayList<String>(pair);
 			String i = list.get(0);
 			String j = list.get(1);
@@ -181,35 +183,23 @@ public class FPTree {
 			// System.out.println(nValue);
 
 			if (!itemsTwoFreqTable.containsKey(pair)) {	// if sup(ij) == 0;
-				pilTable.put(pair, (double)0);
+				// pilTable.put(pair, (double)0);
+				// continue
+				continue;
 			} else {	// use traditional formula pil(i,j) = (sup(ij) / (sup(i) * sup(j))) * N where N is the total number of transactions in db
 				// System.out.println(itemsTwoFreqTable.get(pair));
 				double pilValue = ((double)itemsTwoFreqTable.get(pair) / ((double)itemsFrequencyTable.get(i) * (double)itemsFrequencyTable.get(j))) * (double)nValue;
-				pilTable.put(pair, pilValue);
-			}
-		});
-
-		// System.out.println(itemsTwoFreqTable);
-		// System.out.println(pilTable);
-
-		// TODO: more efficient way to this?
-		// Find highest PIL item - breaking ties with sup if necessary
-		// int totsup = -1;
-		double maxpil = -1;
-		Set<String> highestPilPair = null;
-		for (Set<String> pair : pilTable.keySet()) {
-			double pil = pilTable.get(pair);
-			if (pil > maxpil) {	// found new higest pil value
-				maxpil = pil;
-				highestPilPair = pair;
-			} else if (pil == maxpil) {	// tied; break with sup(ij)
-				if (itemsTwoFreqTable.get(highestPilPair) < itemsTwoFreqTable.get(pair)) {	// if current sup(ij) > tied sup(ij)
-					maxpil = pil;
+				if (pilValue > maxpil) {
+					maxpil = pilValue;
+					highestPilPair = pair;
+				} else if (pilValue == maxpil && itemsTwoFreqTable.get(highestPilPair) < itemsTwoFreqTable.get(pair)) {
+					maxpil = pilValue;
 					highestPilPair = pair;
 				}
+				pilTable.put(pair, pilValue);
 			}
 		}
-
+		
 		// System.out.println("Highest Pil Pair: " + highestPilPair);
 		// System.out.println(maxpil);
 		// System.out.println(itemsTwoFreqTable.get(highestPilPair));
@@ -218,21 +208,19 @@ public class FPTree {
 		String a = tmpList.get(0);
 		String b = tmpList.get(1);
 
-		Hashtable<String,Integer> fTable = new Hashtable<String, Integer>();
-		fTable.put(a,itemsFrequencyTable.get(a));
-		fTable.put(b,itemsFrequencyTable.get(b));
+		// Hashtable<String,Integer> fTable = new Hashtable<String, Integer>();
+		// fTable.put(a,itemsFrequencyTable.get(a));
+		// fTable.put(b,itemsFrequencyTable.get(b));
 
 		// keys.remove(a)
 		List<String> keyList = new ArrayList<>();
 		keyList.addAll(keys);
-		keyList.remove(a);
-		keyList.remove(b);	// remove i,j as they've both been already added to the freq list
 
 		Iterator<String> iter = keyList.iterator();
-		// Filter out infrequent items amongst candidates
+		// Filter out infrequent items and the pair items amongst candidates
 		while (iter.hasNext()) {
 		    String k = iter.next();
-		    if (itemsFrequencyTable.get(k) < support_threshold)
+		    if (itemsFrequencyTable.get(k) < support_threshold || k == a || k == b)
 		        iter.remove();
 		}
 
@@ -263,11 +251,11 @@ public class FPTree {
 			for (String i : keyList) {
 				// System.out.println("i:" + i);
 				double pilSum = 0;
-				Set<String> tmpSet = fTable.keySet();
-				List<String> fList = new ArrayList<>();
-				fList.addAll(tmpSet);
+				// Set<String> tmpSet = fTable.keySet();
+				// List<String> fList = new ArrayList<>();
+				// fList.addAll(tmpSet);
 				// System.out.println(fList);
-				for (String key : fList) {
+				for (String key : pilBasedFList) {
 					// System.out.println(key);
 					Set<String> s = new HashSet<String>();
 					s.add(i);
@@ -285,7 +273,7 @@ public class FPTree {
 			// at this point, we have our candidate to add on to fTable
 			if (candidate != null) {
 				keyList.remove(candidate);
-				fTable.put(candidate, itemsFrequencyTable.get(candidate));
+				// fTable.put(candidate, itemsFrequencyTable.get(candidate));
 				pilBasedFList.add(candidate);
 			}
 		}
@@ -965,27 +953,27 @@ public class FPTree {
 	// 	pilTable.put(item,);
 	// }
 
-	public void extractItemsTwo(String transaction, Hashtable<Set<String>,Integer> items_frequency, Set<String> item) {
-		String []itemsArray = transaction.split("\\s+");	//scan individual items in the transaction
-		Set<String> items = new HashSet<String>(Arrays.asList(itemsArray));
-		// System.out.println(items);
-		if (items.containsAll(item)) {
-			int count = 1;
-			if (items_frequency.containsKey(item))
-				count = items_frequency.get(item) + 1;
-			items_frequency.put(item, new Integer(count));
-		}
-	}
+	// public void extractItemsTwo(String transaction, Hashtable<Set<String>,Integer> items_frequency, Set<String> item) {
+	// 	String []itemsArray = transaction.split("\\s+");	//scan individual items in the transaction
+	// 	Set<String> items = new HashSet<String>(Arrays.asList(itemsArray));
+	// 	// System.out.println(items);
+	// 	if (items.containsAll(item)) {
+	// 		int count = 1;
+	// 		if (items_frequency.containsKey(item))
+	// 			count = items_frequency.get(item) + 1;
+	// 		items_frequency.put(item, new Integer(count));
+	// 	}
+	// }
 
-	public void populateTwoFreqTable(File inputfile, Hashtable<Set<String>,Integer> itemsTwoFreqTable, Set<String> pair) throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
-        String transaction = null;
+	// public void populateTwoFreqTable(File inputfile, Hashtable<Set<String>,Integer> itemsTwoFreqTable, Set<String> pair) throws IOException {
+	// 	BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
+ //        String transaction = null;
                 
-        while((transaction = br.readLine()) != null) //read input file (transaction database)
-        	extractItemsTwo(transaction, itemsTwoFreqTable, pair);	// update counters for every 2-length item
+ //        while((transaction = br.readLine()) != null) //read input file (transaction database)
+ //        	extractItemsTwo(transaction, itemsTwoFreqTable, pair);	// update counters for every 2-length item
         
-        br.close(); //file reading complete
-	}
+ //        br.close(); //file reading complete
+	// }
 
 	public int populateFreqTable (File inputfile, Hashtable<String,Integer> items_frequency) throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(inputfile)));
@@ -1061,6 +1049,7 @@ public class FPTree {
 	    current.remove(x);
 	    //"guess" x is not in the subset
 	    getSubsets(superSet, k, idx+1, current, solution);
+
 	}
 
 
@@ -1080,7 +1069,7 @@ public class FPTree {
 
 		if(args.length>3)
 		{
-			System.out.println("Improper Usage! Number of arguments cannot be more than 2.");
+			System.out.println("Improper Usage! Number of arguments cannot be more than 3.");
 			System.out.println("Please provide input filename and [optional] minimum support.");
 			System.exit(0);
 		}
@@ -1092,14 +1081,14 @@ public class FPTree {
 		
 		long startTime, endTime, totalTime, tcTime = 0;  
 		if ("fp".equals(args[2])) {
+			System.out.println("USING NAIVE FP-GROWTH ALGORITHM:\n");
 			startTime = System.currentTimeMillis();
 			FPTree fpt = new FPTree(file, min_supp);
 			endTime   = System.currentTimeMillis();
+	
 			totalTime = endTime - startTime;
 			tcTime += totalTime;
-			System.out.println("\n");
-			System.out.println("TreeSize: " + fpt.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
-			System.out.println("\n");
+			System.out.println("TreeSize: " + fpt.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms\n");
 			System.out.println("------------");
 			System.out.println("Tree Details:");
 			fpt.printTreeDetails();
@@ -1111,35 +1100,30 @@ public class FPTree {
 			fpt.traverseFPTreeHeaderTable();
 			// System.out.println("\n");
 
-			/* 2. Will print the prefix tree. */
+			// /* 2. Will print the prefix tree. */
 			// System.out.println("------------");
 			// System.out.println("Prefix Tree Information:");
 			fpt.traverseFPTree();
 			// System.out.println("\n");
 			
 			System.out.println("------------");
-			System.out.println("Tree Mining Result:");
+			System.out.println("Tree Mining Result:\n");
 			/* 3. Will mine all the frequent patterns. */
 			startTime = System.currentTimeMillis();
 			fpt.minePatternsByFPGrowth("");
 			endTime = System.currentTimeMillis();
 			totalTime = endTime - startTime;
 			tcTime += totalTime;
-			System.out.println("\n");
-			System.out.println("Mining Time: " + totalTime + " ms");
-			System.out.println("\n");
+			System.out.println("Mining Time: " + totalTime + " ms\n");
 
 			System.out.println("------------");
 			System.out.println("Function Call Statistics:");
 			fpt.printFunctionCallStats();
 			System.out.println("\n");
 			System.out.println("------------");
-			System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
-			System.out.println("\n");
-			System.out.println("------------");
+			System.out.println("\nTotal Construction Time (mining+construction): " + tcTime + " ms\n");
 		} else if ("pil".equals(args[2])) {
-			System.out.println("USING PAIRWISE ITEM LIFT:");
-			System.out.println("\n");
+			System.out.println("USING PAIRWISE ITEM LIFT:\n");
 
 			startTime = System.currentTimeMillis();
 			FPTree fptPil = new FPTree(file, min_supp, true);
@@ -1147,9 +1131,7 @@ public class FPTree {
 
 			totalTime = endTime - startTime;
 			tcTime += totalTime;
-			System.out.println("\n");
-			System.out.println("TreeSize: " + fptPil.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms");
-			System.out.println("\n");
+			System.out.println("TreeSize: " + fptPil.computeTreeSize() + " nodes\t " + "Construction Time: " + totalTime + " ms\n");
 			System.out.println("------------");
 			System.out.println("Tree Details:");
 			fptPil.printTreeDetails();
@@ -1168,26 +1150,25 @@ public class FPTree {
 			// System.out.println("\n");
 			
 			System.out.println("------------");
-			System.out.println("Tree Mining Result:");
+			System.out.println("Tree Mining Result:\n");
 			/* 3. Will mine all the frequent patterns. */
 			startTime = System.currentTimeMillis();
 			fptPil.minePatternsByFPGrowth("");
 			endTime = System.currentTimeMillis();
 			totalTime = endTime - startTime;
 			tcTime += totalTime;
-			System.out.println("\n");
-			System.out.println("Mining Time: " + totalTime + " ms");
-			System.out.println("\n");
+			System.out.println("Mining Time: " + totalTime + " ms\n");
 
 			System.out.println("------------");
 			System.out.println("Function Call Statistics:");
 			fptPil.printFunctionCallStats();
 			System.out.println("\n");
 			System.out.println("------------");
-			System.out.println("TOTAL Construction Time (mining+construction): " + tcTime + " ms");
-			System.out.println("\n");
-			System.out.println("------------");
+			System.out.println("\nTotal Construction Time (mining+construction): " + tcTime + " ms\n");
 
+		} else {
+			System.out.println("final argument must be either 'pil' or 'fp'");
+			System.exit(0);
 		}
 		
 	}	
